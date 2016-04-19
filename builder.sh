@@ -17,7 +17,7 @@ DATESTAMP=`date '+%Y%m%d%H%M'`
 REPO=https://github.com/mozilla/firefox-ios.git
 
 # What branch or commit to checkout
-REVISION=v3.x
+REVISION=v4.x
 
 # Build ID - TODO Should be auto generated or come from the xcconfig file
 BUILDID=$DATESTAMP
