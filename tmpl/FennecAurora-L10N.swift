@@ -5,8 +5,12 @@
 import Alamofire
 import MessageUI
 
-private let AuroraPropertyListURL = "https://people.mozilla.org/iosbuilds/FennecAurora-L10N.plist"
-private let AuroraDownloadPageURL = "https://people.mozilla.org/iosbuilds/FennecAurora-L10N.html"
+// TODO Move these to the xcconfig
+//private let AuroraPropertyListURL = "https://people.mozilla.org/iosbuilds/FennecAurora.plist"
+//private let AuroraDownloadPageURL = "https://people.mozilla.org/iosbuilds/index.html"
+
+private let AuroraPropertyListURL = "https://people.mozilla.org/iosbuilds/FennecAurora.plist"
+private let AuroraDownloadPageURL = "https://people.mozilla.org/iosbuilds/index.html"
 
 private let AppUpdateTitle = NSLocalizedString("New version available", comment: "Prompt title for application update")
 private let AppUpdateMessage = NSLocalizedString("There is a new version available of Firefox Aurora. Tap OK to go to the download page.", comment: "Prompt message for application update")
@@ -15,6 +19,7 @@ private let AppUpdateOK = NSLocalizedString("OK", comment: "Label for OK button 
 
 class AuroraAppDelegate: AppDelegate {
     private var naggedAboutAuroraUpdate = false
+    private let feedbackDelegate = FeedbackSnapshotDelegate()
 
     override func application(application: UIApplication, willFinishLaunchingWithOptions launchOptions: [NSObject : AnyObject]?) -> Bool {
         super.application(application, willFinishLaunchingWithOptions: launchOptions)
@@ -106,12 +111,12 @@ extension AuroraAppDelegate: UIAlertViewDelegate {
     }
 }
 
-extension AuroraAppDelegate: MFMailComposeViewControllerDelegate {
-    private func sendFeedbackMailWithImage(image: UIImage) {
+extension AuroraAppDelegate {
+    func sendFeedbackMailWithImage(image: UIImage) {
         if (MFMailComposeViewController.canSendMail()) {
             if let buildNumber = NSBundle.mainBundle().objectForInfoDictionaryKey(String(kCFBundleVersionKey)) as? NSString {
                 let mailComposeViewController = MFMailComposeViewController()
-                mailComposeViewController.mailComposeDelegate = self
+                mailComposeViewController.mailComposeDelegate = self.feedbackDelegate
                 mailComposeViewController.setSubject("Feedback on iOS client version v\(appVersion) (\(buildNumber))")
                 mailComposeViewController.setToRecipients(["ios-feedback@mozilla.com"])
 
@@ -122,8 +127,10 @@ extension AuroraAppDelegate: MFMailComposeViewControllerDelegate {
             }
         }
     }
+}
 
-    func mailComposeController(mailComposeViewController: MFMailComposeViewController, didFinishWithResult result: MFMailComposeResult, error: NSError?) {
+private class FeedbackSnapshotDelegate: NSObject, MFMailComposeViewControllerDelegate {
+    @objc func mailComposeController(mailComposeViewController: MFMailComposeViewController, didFinishWithResult result: MFMailComposeResult, error: NSError?) {
         mailComposeViewController.dismissViewControllerAnimated(true, completion: nil)
     }
 }
