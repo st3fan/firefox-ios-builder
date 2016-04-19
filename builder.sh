@@ -17,7 +17,7 @@ DATESTAMP=`date '+%Y%m%d%H%M'`
 REPO=https://github.com/mozilla/firefox-ios.git
 
 # What branch or commit to checkout
-REVISION=master
+REVISION=v3.x
 
 # Build ID - TODO Should be auto generated or come from the xcconfig file
 BUILDID=$DATESTAMP
@@ -112,8 +112,7 @@ git checkout $REVISION || exit 1
 # Import locales
 #
 
-scripts/import-locales.sh || exit 1
-
+$HOME/Projects/firefox-ios-build-tools/scripts/import-locales.sh || exit 1
 
 #
 # This is a big hack to get the right update check URLs in AuroraAppDelegate
@@ -130,7 +129,6 @@ fi
 #
 
 perl -pi -e "s/MOZ_BUILD_ID = \d+/MOZ_BUILD_ID = $BUILDID/" Client/Configuration/BaseConfig.xcconfig
-
 
 #
 # Make a build and export it
@@ -171,7 +169,6 @@ xcrun xcodebuild \
     -exportOptionsPlist "Client/Configuration/${BUILDSCHEME}ExportOptions.plist"
 mv ../$ASSETS/$BUILDSCHEME.ipa ../$ASSETS/$IPA
 
-
 #
 # Upload files to server
 #
@@ -182,4 +179,3 @@ scp ../$ASSETS/$IPA people.mozilla.org:/home/iosbuilds/builds/$IPA || exit 1
 
 ssh people.mozilla.org "ln -sf /home/iosbuilds/$PLIST /home/iosbuilds/$BUILDFLAVOUR.plist" || exit 1
 ssh people.mozilla.org "ln -sf /home/iosbuilds/$HTML /home/iosbuilds/$BUILDFLAVOUR.html" || exit 1
-
