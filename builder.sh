@@ -50,10 +50,10 @@ IPA="${BUILDNAME}.ipa"
 if [ -d python-env ]; then
   source python-env/bin/activate || exit 1
 else
-  virtualenv python-env || exit 1
+  virtualenv -p /usr/bin/python2.7 python-env || exit 1
   source python-env/bin/activate || exit 1
-  brew install libxml2 || exit 1
-  STATIC_DEPS=true pip install lxml || exit 1
+  export CFLAGS=-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/usr/include/libxml2
+  pip install lxml || exit 1
 fi
 
 
@@ -105,7 +105,8 @@ git checkout $REVISION || exit 1
 # Checkout our Carthage dependencies
 #
 
-./checkout.sh || exit 1
+ln -s ../Carthage
+./bootstrap.sh || exit 1
 
 
 #
@@ -128,22 +129,25 @@ fi
 # TODO This can probably be done with an xcconfig file too?
 #
 
-perl -pi -e "s/MOZ_BUILD_ID = \d+/MOZ_BUILD_ID = $BUILDID/" Client/Configuration/BaseConfig.xcconfig
+/usr/libexec/PlistBuddy Client/Info.plist -c "set :CFBundleVersion $BUILDID" || exit 1
+/usr/libexec/PlistBuddy Extensions/SendTo/Info.plist -c "set :CFBundleVersion $BUILDID" || exit 1
+/usr/libexec/PlistBuddy Extensions/ShareTo/Info.plist -c "set :CFBundleVersion $BUILDID" || exit 1
+/usr/libexec/PlistBuddy Extensions/Today/Info.plist -c "set :CFBundleVersion $BUILDID" || exit 1
+/usr/libexec/PlistBuddy Extensions/ViewLater/Info.plist -c "set :CFBundleVersion $BUILDID" || exit 1
 
 #
 # Make a build and export it
 #
 
-rm -rf ~/Library/Developer/Xcode/DerivedData
-mkdir DerivedData || exit 1
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
-xcrun xcodebuild archive \
+(xcrun xcodebuild archive \
     -jobs 1 \
     -derivedDataPath ./DerivedData \
     -archivePath ./$BUILDSCHEME.xcarchive \
     -project Client.xcodeproj \
     -scheme $BUILDSCHEME \
-    -sdk iphoneos || exit 1
+    -sdk iphoneos || exit 1)  > xcodebuild1.log
 
 
 # TODO Is -skipUnavailableActions needed?
@@ -166,7 +170,7 @@ xcrun xcodebuild \
     -exportArchive \
     -archivePath ./$BUILDSCHEME.xcarchive \
     -exportPath ../$ASSETS \
-    -exportOptionsPlist "Client/Configuration/${BUILDSCHEME}ExportOptions.plist"
+    -exportOptionsPlist "Client/Configuration/${BUILDSCHEME}ExportOptions.plist" > xcodebuild2.log
 mv ../$ASSETS/$BUILDSCHEME.ipa ../$ASSETS/$IPA
 
 #
